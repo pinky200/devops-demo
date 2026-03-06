@@ -11,6 +11,36 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Install Dependencies') {
+            steps {
+                sh 'cd app && npm install'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh """
+                        ${tool 'sonar-scanner'}/bin/sonar-scanner \
+                        -Dsonar.projectKey=demo-app \
+                        -Dsonar.projectName=demo-app \
+                        -Dsonar.sources=app \
+                        -Dsonar.exclusions=app/node_modules/**,app/coverage/**
+                    """
+                }
+            }
+        }
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        stage('Unit Tests') {
+            steps {
+                sh 'cd app && npm test'
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t ${ACR_NAME}/${IMAGE_NAME}:${IMAGE_TAG} ./app'
@@ -19,7 +49,7 @@ pipeline {
         stage('Push to ACR') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'acr-credentials', usernameVariable: 'ACR_USER', passwordVariable: 'ACR_PASS')]) {
-                    sh 'docker login ${ACR_NAME} -u ${ACR_USER} -p ${ACR_PASS}'
+                    sh 'echo ${ACR_PASS} | docker login ${ACR_NAME} -u ${ACR_USER} --password-stdin'
                     sh 'docker push ${ACR_NAME}/${IMAGE_NAME}:${IMAGE_TAG}'
                 }
             }
@@ -37,6 +67,14 @@ pipeline {
                     """
                 }
             }
+        }
+    }
+    post {
+        failure {
+            echo 'Pipeline failed! Check the logs above.'
+        }
+        success {
+            echo 'Pipeline succeeded! New version deployed.'
         }
     }
 }
