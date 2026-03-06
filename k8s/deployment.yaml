@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: demo-app
-        image: myjenkinsacr.azurecr.io/demo-app:3
+        image: myjenkinsacr.azurecr.io/demo-app:8
         ports:
         - containerPort: 3000
 ---
