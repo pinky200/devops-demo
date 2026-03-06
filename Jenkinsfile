@@ -6,6 +6,11 @@ pipeline {
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t ${ACR_NAME}/${IMAGE_NAME}:${IMAGE_TAG} ./app'
@@ -28,7 +33,7 @@ pipeline {
                         git config user.name "Jenkins"
                         git add k8s/deployment.yaml
                         git commit -m "Update image to ${IMAGE_TAG}"
-                        git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/pinky200/devops-demo.git main
+                        git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/pinky200/devops-demo.git HEAD:main
                     """
                 }
             }
