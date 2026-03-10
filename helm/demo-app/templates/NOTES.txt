@@ -1,0 +1,10 @@
+Application {{ .Chart.Name }} has been deployed!
+
+Get the application URL:
+{{- if .Values.ingress.enabled }}
+{{- range .Values.ingress.hosts }}
+  http://{{ .host }}
+{{- end }}
+{{- else }}
+  kubectl port-forward svc/{{ include "demo-app.fullname" . }} 3000:{{ .Values.service.port }}
+{{- end }}

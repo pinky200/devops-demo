@@ -1,0 +1,11 @@
+replicaCount: 1
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+  hosts:
+    - host: demo-app-dev.172.193.202.166.nip.io
+      paths:
+        - path: /
+          pathType: Prefix
