@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: myjenkinsacr.azurecr.io/demo-app
-  tag: latest
+  tag: "11"
   pullPolicy: Always
 
 service:
