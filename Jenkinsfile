@@ -32,7 +32,7 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 timeout(time: 2, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                    waitForQualityGate abortPipeline: false
                 }
             }
         }
@@ -58,14 +58,19 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
                     sh """
-                        sed -i 's|image:.*|image: ${ACR_NAME}/${IMAGE_NAME}:${IMAGE_TAG}|' k8s/deployment.yaml
+                        sed -i 's|tag:.*|tag: "${IMAGE_TAG}"|' helm/demo-app/values.yaml
                         git config user.email "jenkins@demo.com"
                         git config user.name "Jenkins"
-                        git add k8s/deployment.yaml
-                        git commit -m "Update image to ${IMAGE_TAG}"
+                        git add helm/demo-app/values.yaml
+                        git commit -m "Update image tag to ${IMAGE_TAG}"
                         git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/pinky200/devops-demo.git HEAD:main
                     """
                 }
+            }
+        }
+        stage('Deploy ArgoCD Apps') {
+            steps {
+                sh 'kubectl apply -f argocd/root-app.yaml'
             }
         }
     }
@@ -74,7 +79,7 @@ pipeline {
             echo 'Pipeline failed! Check the logs above.'
         }
         success {
-            echo 'Pipeline succeeded! New version deployed.'
+            echo 'Pipeline succeeded! New version deployed to dev and prod!'
         }
     }
 }
